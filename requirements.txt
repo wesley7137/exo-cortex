@@ -1,0 +1,12 @@
+flask
+flask-cors
+torch
+torch-geometric
+stable-baselines3
+gym
+numpy
+sounddevice
+flask_sqlalchemy
+Flask-Migrate
+Authlib
+python-dotenv
