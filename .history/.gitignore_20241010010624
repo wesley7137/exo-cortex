@@ -4,7 +4,7 @@
 frontend/node_modules/
 /.pnp
 .pnp.js
-/backend/tts/
+
 # testing
 /coverage
 
