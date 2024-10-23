@@ -1,93 +1,83 @@
-Based on the form factor shown in the images you provided, let's outline the detailed components and their technical specifications for creating the ExoCortex device. The design will incorporate sleek and compact hardware to ensure comfort and unobtrusiveness, similar to the example headset. Below are the key hardware components:
-1. ESP32 Board (Main Processing Unit)
+DEVICE_README.md (Updated for New Form Factor)
 
-    Model: ESP32-WROOM-32 (or equivalent)
-    Dimensions: ~25.5mm x 18mm (for the compact model)
-    Weight: ~4g
-    Key Specs:
-        Dual-core processor (Xtensa LX6)
-        WiFi and Bluetooth capability (integrated WiFi 802.11 b/g/n and Bluetooth v4.2 BR/EDR and BLE)
-        GPIO pins for peripheral integration
-        Voltage supply: 3.3V
-    Connections:
-        Power connection (3.3V regulator)
-        GPIO pins for I2S microphone, camera, etc.
-        SPI, I2C interfaces for connecting external sensors or devices.
+Project Summary
+The ExoCortex device is designed to function as a wearable AI peripheral that acts as a second brain by storing interactions, serving as a knowledge base, and functioning as a memory bank. This AI system includes a local assistant interface with users via voice commands. The peripheral is designed to be worn around the ear, featuring a sleek and minimalistic design for user comfort and seamless integration.
+Device Overview:
 
-2. Adafruit I2S MEMS Microphone (SPH0645LM4H)
+Form Factor:
+The new form factor closely resembles a slim and ergonomic open-ear headset design (as in the images), allowing the device to be worn comfortably for long periods. The main body will house the electronics, including the ESP32 board, battery, microphone, and camera. The design allows the camera to face forward while the components are evenly distributed for balance and comfort.
 
-    Model: SPH0645LM4H (already on hand)
-    Dimensions: ~6mm x 3mm x 1mm
-    Key Specs:
-        Interface: I2S (digital audio interface)
-        Supply voltage: 1.8V – 3.3V
-        Sensitivity: -26 dBFS
-        Low power consumption
-        Frequency response: 100 Hz – 10 kHz
-        Connection to ESP32 via I2S interface
+Main Components:
 
-3. Camera (Wide Angle)
+    ESP32 Board (Main Processing Unit):
+        Model: ESP32-WROOM-32
+        Dimensions: 25.5mm x 18mm
+        Weight: ~4g
+        Specs:
+            Dual-core Xtensa LX6 processor
+            Integrated WiFi 802.11 b/g/n and Bluetooth v4.2 BR/EDR/BLE
+            GPIO pins for peripheral integration
+            Voltage supply: 3.3V
 
-    Model: OV2640 (with a wide-angle lens)
-    Dimensions: ~9mm x 9mm (camera module)
-    Key Specs:
-        Resolution: 2MP (1600x1200)
-        Wide-angle: ~160 degrees field of view
-        Interface: SCCB (Serial Camera Control Bus)
-        Voltage supply: 2.5V - 3.0V
-        Output formats: JPEG, YUV, RGB
-        Can be connected via ESP32’s camera interface
-    Lens module: Wide-angle lens to capture more of the surroundings while being worn on the ear.
+    Placement:
+    The ESP32 will be housed in the rear portion of the headset, near the curved section behind the ear for secure placement. The board will be placed vertically to reduce the device’s width.
 
-4. Battery (Power Supply)
+    Camera (Wide-Angle, Forward-Facing):
+        Model: OV2640 (with a wide-angle lens)
+        Dimensions: ~9mm x 9mm
+        Specs:
+            2MP resolution (1600x1200)
+            160-degree wide-angle view
+            Interface: SCCB
+            Output formats: JPEG, YUV, RGB
+        Lens Placement:
+        The camera will be flush-mounted on the side of the earpiece, facing forward to capture the user’s viewpoint.
 
-    Model: Li-ion rechargeable battery (small form factor)
-    Capacity: ~200mAh to 500mAh (depending on space available)
-    Voltage: 3.7V nominal
-    Dimensions: ~25mm x 30mm x 4mm (smallest size possible)
-    Weight: ~4g – 8g
-    Connections:
-        Voltage regulator to step down to 3.3V for ESP32 and other peripherals
+    Microphone (Digital Audio Input):
+        Model: Adafruit I2S MEMS Microphone (SPH0645LM4H)
+        Dimensions: 6mm x 3mm x 1mm
+        Specs:
+            I2S (digital audio) interface
+            Supply voltage: 1.8V – 3.3V
+            Frequency response: 100 Hz – 10 kHz
+        Placement:
+        The microphone will be integrated into the body of the headset, placed near the front for clear audio capture, with the port facing downward or sideways to minimize noise interference.
 
-5. Headset Enclosure Design
+    Battery (Power Supply):
+        Model: Lithium-ion rechargeable battery
+        Capacity: 300-500mAh (based on space availability)
+        Voltage: 3.7V nominal
+        Dimensions: 25mm x 30mm x 4mm
+        Placement:
+        The battery will be housed in the rear part of the headset, curving behind the ear for optimal weight distribution. The USB-C charging port will be discreetly placed for easy access.
 
-    Material: Lightweight plastic or composite (to match the example)
-    Dimensions:
-        Primary body containing ESP32, microphone, and battery: approximately ~60mm x 25mm x 15mm (behind the ear)
-        Extension piece containing the camera facing forward: adjustable depending on the design, should not extend more than ~15mm from the ear
-    Weight Distribution:
-        Balance between the rear part (battery and ESP32) and the forward part (camera and sensors) to maintain comfort and prevent discomfort over long periods.
+    Audio Output (Optional Bone Conduction):
+        Model: Bone conduction transducer (if integrating audio)
+        Dimensions: 20mm x 10mm x 5mm
+        Placement:
+        If required, the bone conduction transducer will be placed near the bottom portion of the ear hook, allowing sound to be transmitted directly to the user’s ear.
 
-6. Buttons and Connectivity Ports
+Device Design:
 
-    Buttons:
-        Power button: Small tactile button (2-3mm diameter) for turning the device on and off.
-        Volume control (if necessary): Small side buttons for adjusting microphone input levels or interaction settings.
-    Charging Port:
-        USB-C or Micro-USB port (for charging the internal battery and possibly data communication).
+    Earpiece Enclosure Design:
+        The enclosure is streamlined to fit behind the ear, with smooth curves to match the shape of the head and ear.
+        Materials: Lightweight plastic or composite materials for durability and comfort.
+        Weight: The total weight of the device will be kept under 50g to ensure it remains light and wearable for extended periods.
 
-7. Speaker or Bone Conduction Audio Output
+    Forward-Facing Camera:
+        The camera module will be embedded on the side of the earpiece near the top, allowing a clear forward-facing view for data capture.
+        The camera will sit flush with the housing, minimizing protrusions and maintaining the sleek aesthetic.
 
-    Model: Bone conduction transducer (optional if integrating audio output)
-    Dimensions: ~20mm x 10mm x 5mm
-    Power: Connected to one of the ESP32’s GPIO for control
-    Mounting: Integrated into the behind-the-ear section of the housing, similar to bone conduction headsets.
+    Microphone Port:
+        A small opening in the housing near the front will be added for the microphone. The port will be optimized for sound capture while minimizing wind or external noise.
 
-General Placement in the Design:
+    USB-C Port:
+        The USB-C charging port will be located on the inner part of the rear housing, allowing easy access for charging while keeping it hidden from the external view.
 
-    Main Body (Behind Ear):
-        ESP32 Board
-        Battery
-        Microphone (I2S)
-        Power Button and Charging Port
-        Optional: Audio transducer (for bone conduction)
+Hardware Components:
 
-    Forward Facing Part (Near Temple):
-        Camera Module (OV2640)
-
-    Ear Hook:
-        Simple plastic extension to provide secure fit around the ear.
-
-This layout ensures that the main processing components, power supply, and controls are kept close to the ear for easy access, while the camera is positioned forward-facing without being intrusive or heavy. The form factor remains sleek, like the example headset, while incorporating all necessary functionality.
-
-ChatGPT can make mistakes. Check important info.
+    ESP32 Placement: Inside the rear housing of the earpiece, with connections routed internally to the camera and microphone.
+    Camera Slot: Flush mount on the side, no more than 9mm protrusion.
+    Microphone Port: Discreet port near the front to capture clear sound.
+    Battery Compartment: Positioned behind the ear for weight distribution.
+    Charging Port: USB-C or micro-USB near the back of the device for easy charging.
