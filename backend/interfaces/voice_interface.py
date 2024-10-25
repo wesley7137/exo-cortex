@@ -2,8 +2,6 @@ from TTS.api import TTS
 import logging
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-import torch
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import logging
 import sounddevice as sd
 

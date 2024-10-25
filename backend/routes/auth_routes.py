@@ -3,10 +3,9 @@ from models import db, User, Preference
 from neocortex.backend.routes.auth_routes import token_required
 import logging
 
-api_bp = Blueprint('api', __name__)
 
 # Task Management Routes
-@api_bp.route('/tasks', methods=['GET', 'POST'])
+@app.route('/tasks', methods=['GET', 'POST'])
 @token_required
 def manage_tasks(user):
     if request.method == 'POST':
@@ -17,8 +16,10 @@ def manage_tasks(user):
     # Implement GET logic
     return jsonify({"tasks": []})
 
+
+
 # Preferences Routes
-@api_bp.route('/users/<user_id>/preferences', methods=['GET', 'POST'])
+@app.route('/users/<user_id>/preferences', methods=['GET', 'POST'])
 @token_required
 def user_preferences(user, user_id):
     if str(user.id) != user_id:
@@ -44,8 +45,10 @@ def user_preferences(user, user_id):
         "use_cases": preference.use_cases
     })
 
+
+
 # AI Interaction Route
-@api_bp.route('/ai/interact', methods=['POST'])
+@app.route('/ai/interact', methods=['POST'])
 @token_required
 def ai_interact(user):
     data = request.json
@@ -56,7 +59,7 @@ def ai_interact(user):
     return jsonify({"reply": reply})
 
 # Knowledge Graph Query Route
-@api_bp.route('/knowledge_graph/query', methods=['POST'])
+@app.route('/knowledge_graph/query', methods=['POST'])
 @token_required
 def query_knowledge_graph(user):
     # Implement knowledge graph query logic

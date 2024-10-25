@@ -1,93 +1,59 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Grid,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
+import "../styles/Theme.css";
 
 const AIAssistantSummary = ({ config, aiProfile, open, onClose }) => {
-  if (!aiProfile) {
-    return null; // Don't render anything if aiProfile is null
+  if (!aiProfile || !open) {
+    return null;
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>AI Assistant Summary</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={3} style={{ padding: "1rem" }}>
-              <Typography variant="h6" gutterBottom>
-                Configuration
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemText
-                    primary="Base Model"
-                    secondary={config.baseModel}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Personality"
-                    secondary={config.personality}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Primary Expertise"
-                    secondary={config.primaryExpertise}
-                  />
-                </ListItem>
-                {/* Add more configuration details as needed */}
-              </List>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={3} style={{ padding: "1rem" }}>
-              <Typography variant="h6" gutterBottom>
-                AI Profile
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemText
-                    primary="Always On"
-                    secondary={aiProfile.always_on ? "Yes" : "No"}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Base Model"
-                    secondary={aiProfile.base_model}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Communication Style"
-                    secondary={aiProfile.communication_style}
-                  />
-                </ListItem>
-                {/* Add more AI profile details as needed */}
-              </List>
-            </Paper>
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <div
+      className="card"
+      style={{ maxWidth: "800px", margin: "40px auto", padding: "20px" }}
+    >
+      <h2 className="card-header">AI Assistant Summary</h2>
+      <div className="summary-content">
+        <div className="summary-section">
+          <h3>Configuration</h3>
+          <ul>
+            <li>Base Model: {config.baseModel}</li>
+            <li>Personality: {config.personality}</li>
+            <li>Primary Expertise: {config.primaryExpertise}</li>
+            <li>Communication Style: {config.communicationStyle}</li>
+            <li>Creativity Level: {config.creativityLevel}</li>
+            <li>Response Length: {config.responseLength}</li>
+            <li>Memory Modules: {config.memoryModules.join(", ")}</li>
+            <li>Tool Integrations: {config.toolIntegrations.join(", ")}</li>
+            <li>Execute Code: {config.executeCode ? "Yes" : "No"}</li>
+            <li>Always On: {config.alwaysOn ? "Yes" : "No"}</li>
+            <li>Ethical Boundaries: {config.ethicalBoundaries.join(", ")}</li>
+            <li>
+              Language Proficiency: {config.languageProficiency.join(", ")}
+            </li>
+            <li>
+              Voice Interface: {config.voiceInterface ? "Enabled" : "Disabled"}
+            </li>
+            <li>Learning Rate: {config.learningRate}</li>
+            <li>
+              Speech-to-Text: {config.speechToText ? "Enabled" : "Disabled"}
+            </li>
+          </ul>
+        </div>
+        <div className="summary-section">
+          <h3>AI Profile</h3>
+          <ul>
+            <li>AI Profile ID: {aiProfile.id}</li>
+            <li>Base Model: {aiProfile.base_model}</li>
+            <li>Always On: {aiProfile.always_on ? "Yes" : "No"}</li>
+            <li>Communication Style: {aiProfile.communication_style}</li>
+          </ul>
+        </div>
+      </div>
+      <button className="button" onClick={onClose}>
+        Close
+      </button>
+    </div>
   );
 };
 

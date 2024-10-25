@@ -1,4 +1,5 @@
 // frontend/TaskManager.js
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -7,47 +8,72 @@ import {
   Button,
   FlatList,
   StyleSheet,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
-import CONFIG from "./config";
+import CONFIG from "../config";
 
 const TaskManager = () => {
   const [tasks, setTasks] = useState([]);
   const [taskInput, setTaskInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
   const fetchTasks = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`${CONFIG.API_BASE_URL}/tasks`);
+      const response = await fetch(`${CONFIG.API_BASE_URL}/tasks`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setTasks(Object.entries(data).map(([id, task]) => ({ id, ...task })));
+      // Assuming data is an object with task IDs as keys
+      const formattedTasks = Object.entries(data).map(([id, task]) => ({
+        id,
+        ...task,
+      }));
+      setTasks(formattedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
+      Alert.alert("Error", `Failed to fetch tasks: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const addTask = async () => {
     if (taskInput.trim() === "") return;
+    setLoading(true);
     try {
+      const payload = {
+        description: taskInput.trim(),
+      };
       const response = await fetch(`${CONFIG.API_BASE_URL}/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ description: taskInput }),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       setTaskInput("");
       fetchTasks(); // Refresh the task list
+      Alert.alert("Success", "Task added successfully!");
     } catch (error) {
       console.error("Error adding task:", error);
+      Alert.alert("Error", `Failed to add task: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,17 +86,19 @@ const TaskManager = () => {
         value={taskInput}
         onChangeText={setTaskInput}
       />
-      <Button title="Add Task" onPress={addTask} />
+      <Button title="Add Task" onPress={addTask} disabled={loading} />
+      {loading && <ActivityIndicator size="large" color="#0000ff" />}
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.taskItem}>
-            <Text>
+            <Text style={styles.taskText}>
               {item.description} - {item.status}
             </Text>
           </View>
         )}
+        style={{ marginTop: 20 }}
       />
     </View>
   );
@@ -78,9 +106,9 @@ const TaskManager = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 20,
     backgroundColor: "#fff",
+    flex: 1,
   },
   title: {
     fontSize: 24,
@@ -98,6 +126,9 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+  },
+  taskText: {
+    fontSize: 16,
   },
 });
 

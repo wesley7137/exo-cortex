@@ -1,7 +1,7 @@
 # interfaces/cli.py
 import argparse
-from ai_model.integration import AIAssistant
-from cortex import KnowledgeIngestion
+from ai_model.integrations_manager import AIAssistant
+from cortex.cortex import KnowledgeIngestion
 import logging
 
 logger = logging.getLogger(__name__)

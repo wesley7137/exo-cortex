@@ -1,8 +1,8 @@
 # interfaces/gui.py
 import tkinter as tk
 from tkinter import scrolledtext
-from ai_model.integration import AIAssistant
-from cortex import KnowledgeIngestion
+from ai_model.integrations_manager import AIAssistant
+from cortex.cortex import KnowledgeIngestion
 import threading
 
 class ExoCortexGUI:

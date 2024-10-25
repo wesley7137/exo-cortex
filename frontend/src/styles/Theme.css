@@ -2,19 +2,23 @@
 :root {
   --primary-color: #00bcd4;
   --secondary-color: #ff4081;
-  --background-color: #121212;
+  --background-color: #565656;
   --card-background-color: #1d1d1d;
+  --card-background-color-secondary: #999999;
   --text-color-primary: #e0e0e0;
-  --text-color-secondary: #b0b0b0;
+  --text-color-secondary: #f6f6f6;
   --slider-track-color: #00bcd4;
   --slider-thumb-color: #ff4081;
-  --button-background-color: #00bcd4;
+  --button-background-color: #535353ee;
   --button-hover-color: #008ba3;
   --button-text-color: #ffffff;
-  --input-background-color: #2e2e2e;
-  --input-text-color: #e0e0e0;
+  --input-background-color: #444444;
+  --input-text-color: #ffffff;
   --checkbox-color: #00bcd4;
   --switch-track-color: #00bcd4;
+  --box-shadow: 0 4px 6px rgba(16, 16, 16, 0.571),
+    0 1px 3px rgba(57, 57, 57, 0.6);
+
   --switch-thumb-color: #ff4081;
 }
 
@@ -23,13 +27,13 @@ body {
   background-color: var(--background-color);
   color: var(--text-color-primary);
   font-family: "Roboto", sans-serif;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.1);
 }
-
 .card {
   background-color: var(--card-background-color);
   border-radius: 8px;
   padding: 16px;
-  box-shadow: none;
+  box-shadow: var(--box-shadow);
 }
 
 .card-header {
@@ -45,10 +49,12 @@ button {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  box-shadow: var(--box-shadow);
 }
 
 button:hover {
   background-color: var(--button-hover-color);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 button:disabled {
@@ -59,20 +65,42 @@ button:disabled {
 select {
   background-color: var(--input-background-color);
   color: var(--input-text-color);
-  border: none;
+  border: 1px solid white; /* Add white outline */
   border-radius: 4px;
   padding: 8px;
   width: 100%;
   margin-bottom: 16px;
+  appearance: none; /* Remove default styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px top 50%;
+  background-size: 12px auto;
 }
 
 select:focus {
   outline: none;
-  border: 1px solid var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Style for the options within the select */
+select option {
+  background-color: var(
+    --card-background-color
+  ); /* Different color for inactive options */
+  color: var(--text-color-primary);
+}
+
+/* Style for the selected option */
+select option:checked {
+  background-color: var(--primary-color);
+  color: var(--text-color-primary);
 }
 
 .menu-item {
   color: var(--text-color-secondary);
+  background-color: var(--card-background-color-secondary);
 }
 
 input,
@@ -83,6 +111,8 @@ textarea {
   border-radius: 4px;
   padding: 8px;
   width: 100%;
+  box-shadow: var(--box-shadow);
+
   margin-bottom: 16px;
 }
 
@@ -143,6 +173,7 @@ label {
 .tooltip {
   background-color: var(--primary-color);
   color: var(--text-color-primary);
+  box-shadow: var(--box-shadow);
 }
 
 .tooltip:hover {
@@ -185,4 +216,108 @@ label {
   button {
     width: 100%;
   }
+}
+
+/* Add these styles to your existing Theme.css file */
+.form-group {
+  margin-bottom: 20px;
+  width: 90%;
+  margin-left: 5%;
+}
+
+.form-group > label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Style for checkbox */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--primary-color);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--primary-color);
+}
+
+input[type="checkbox"]:checked::before {
+  content: "\2714";
+  font-size: 16px;
+  color: var(--text-color-primary);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.loading {
+  color: var(--text-color-primary);
+}
+
+.snackbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: 4px;
+  color: white;
+}
+
+.snackbar.success {
+  background-color: #4caf50;
+}
+
+.snackbar.error {
+  background-color: #f44336;
+}
+
+.slider-container {
+  margin-bottom: 20px;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.slider-labels span:first-child {
+  text-align: left;
+}
+
+.slider-labels span:last-child {
+  text-align: right;
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: 10px 0;
 }

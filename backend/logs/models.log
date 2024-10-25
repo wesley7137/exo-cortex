@@ -1,0 +1,18 @@
+2024-10-10 15:16:55,430 ERROR Error during PPOAgent training: CustomEnv.reset() got an unexpected keyword argument 'seed'
+2024-10-10 15:23:24,362 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 15:23:24,502 INFO GNNModelWrapper initialized successfully.
+2024-10-10 15:25:00,056 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 15:25:00,209 INFO GNNModelWrapper initialized successfully.
+2024-10-10 15:25:32,478 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 15:25:32,573 INFO GNNModelWrapper initialized successfully.
+2024-10-10 15:26:43,949 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 15:26:44,042 INFO GNNModelWrapper initialized successfully.
+2024-10-10 15:43:36,457 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 15:43:36,554 INFO GNNModelWrapper initialized successfully.
+2024-10-10 17:18:42,290 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 17:18:42,395 INFO GNNModelWrapper initialized successfully.
+2024-10-10 17:19:11,146 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 17:19:11,242 INFO GNNModelWrapper initialized successfully.
+2024-10-10 17:21:33,961 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 17:33:03,711 INFO PPOAgent trained for 10000 timesteps.
+2024-10-10 17:33:03,819 INFO GNNModelWrapper initialized successfully.

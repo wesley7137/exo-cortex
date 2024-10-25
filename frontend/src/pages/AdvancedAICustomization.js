@@ -1,4 +1,4 @@
-// AdvancedAICustomization.js
+// frontend/components/AdvancedAICustomization.js
 
 import React, { useState } from "react";
 import "../styles/Theme.css";
@@ -17,11 +17,15 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Grid,
 } from "@mui/material";
+import { API_BASE_URL } from "../config";
 import {
   generateAIProfile,
   fineTuneModel,
   deployAIAssistant,
+  trainPPOAgent,
+  initializeGNNModel,
 } from "../services/api";
 import AIAssistantSummary from "../components/AIAssistantSummary";
 
@@ -40,9 +44,10 @@ const AdvancedAICustomization = () => {
     ethicalBoundaries: [],
     languageProficiency: [],
     voiceInterface: false,
-    learningRate: 50,
+    learningRate: 0.0003, // Changed to float
     speechToText: false,
   });
+  const [error, setError] = useState("");
 
   const [showSummary, setShowSummary] = useState(false);
   const [aiProfile, setAIProfile] = useState(null);
@@ -106,9 +111,10 @@ const AdvancedAICustomization = () => {
     setLoading(true);
     try {
       const fineTuneParams = {
-        // Define your fine-tuning parameters here
-        learning_rate: config.learningRate,
-        // Add other parameters as needed
+        learningRate: config.learningRate,
+        epochs: 3, // Example parameter
+        batchSize: 16, // Example parameter
+        datasetPath: "/path/to/dataset", // Replace with actual dataset path
       };
       const result = await fineTuneModel(aiProfile.id, fineTuneParams);
       setSnackbar({
@@ -121,7 +127,7 @@ const AdvancedAICustomization = () => {
       console.error("Error fine-tuning model:", error);
       setSnackbar({
         open: true,
-        message: "Failed to fine-tune model.",
+        message: `Failed to fine-tune model: ${error.message}`,
         severity: "error",
       });
     } finally {
@@ -141,13 +147,12 @@ const AdvancedAICustomization = () => {
     setLoading(true);
     try {
       const deploymentParams = {
-        // Define your deployment parameters here
         environment: "production",
         scaling: {
           min_instances: 1,
           max_instances: 5,
         },
-        // Add other parameters as needed
+        customConfigurations: {}, // Add any custom configurations if needed
       };
       const deployment = await deployAIAssistant(
         aiProfile.id,
@@ -163,7 +168,7 @@ const AdvancedAICustomization = () => {
       console.error("Error deploying AI assistant:", error);
       setSnackbar({
         open: true,
-        message: "Failed to deploy AI assistant.",
+        message: `Failed to deploy AI assistant: ${error.message}`,
         severity: "error",
       });
     } finally {
@@ -171,8 +176,54 @@ const AdvancedAICustomization = () => {
     }
   };
 
-  const handleCustomizeProfile = (key, value) => {
-    setAIProfile((prev) => ({ ...prev, [key]: value }));
+  const handleTrainPPOAgent = async () => {
+    setLoading(true);
+    try {
+      const totalTimesteps = 5000; // Example parameter
+      const response = await trainPPOAgent(totalTimesteps);
+      setSnackbar({
+        open: true,
+        message: "PPO Agent training initiated!",
+        severity: "success",
+      });
+      console.log("Training Response:", response);
+    } catch (error) {
+      console.error("Error initiating PPO Agent training:", error);
+      setSnackbar({
+        open: true,
+        message: `Failed to initiate PPO Agent training: ${error.message}`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInitializeGNNModel = async () => {
+    setLoading(true);
+    try {
+      const gnnParams = {
+        input_dim: 10,
+        hidden_dim: 16,
+        output_dim: 4,
+      };
+      const response = await initializeGNNModel(gnnParams);
+      setSnackbar({
+        open: true,
+        message: "GNN Model initialization initiated!",
+        severity: "success",
+      });
+      console.log("GNN Initialization Response:", response);
+    } catch (error) {
+      console.error("Error initializing GNN model:", error);
+      setSnackbar({
+        open: true,
+        message: `Failed to initialize GNN model: ${error.message}`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCloseSnackbar = () => {
@@ -184,474 +235,316 @@ const AdvancedAICustomization = () => {
       <AIAssistantSummary
         config={config}
         aiProfile={aiProfile}
-        onCustomize={handleCustomizeProfile}
+        open={showSummary}
+        onClose={handleCloseSummary}
       />
     );
   }
 
   return (
-    <Card
-      sx={{
-        backgroundColor: "grey",
-        width: "70vw",
-        alignItems: "center",
-        marginLeft: "auto",
-        marginRight: "auto",
-      }}
-      className="mb-6"
+    <div
+      className="card"
+      style={{ maxWidth: "800px", margin: "40px auto", padding: "20px" }}
     >
-      <CardHeader title="Advanced AI Customization" />
-      <CardContent>
-        <div className="space-y-6">
-          {/* Base Model Selection */}
-          <div>
-            <Typography variant="subtitle1" gutterBottom>
-              Select Base Model
-            </Typography>
-            <Select
-              fullWidth
-              value={config.baseModel}
-              onChange={(e) => handleConfigChange("baseModel", e.target.value)}
-              displayEmpty
-            >
-              <MenuItem value="" disabled>
-                Choose a base model
-              </MenuItem>
-              <MenuItem value="gpt4mini">GPT-4 Mini</MenuItem>
-              <MenuItem value="llama3.2-3b">
-                LLaMA 3.2 (3 billion parameters)
-              </MenuItem>
-              <MenuItem value="llama3.2-1b">
-                LLaMA 3.2 (1 billion parameters)
-              </MenuItem>
-              <MenuItem value="mini-llava">Mini-LLaVA</MenuItem>
-              <MenuItem value="qwen2.5-2b">
-                Qwen 2.5 (2 billion parameters)
-              </MenuItem>
-            </Select>
-          </div>
+      <h2 className="card-header">Advanced AI Customization</h2>
+      <form>
+        <div className="form-group">
+          <label htmlFor="baseModel">Select Base Model</label>
+          <select
+            id="baseModel"
+            value={config.baseModel}
+            onChange={(e) => handleConfigChange("baseModel", e.target.value)}
+          >
+            <option value="" disabled>
+              Choose a base model
+            </option>
+            <option value="gpt4mini">GPT-4 Mini</option>
+            <option value="llama3.2-3b">LLaMA 3.2 (3B Params)</option>
+            <option value="llama3.2-1b">LLaMA 3.2 (1B Params)</option>
+            <option value="mini-llava">Mini-LLaVA</option>
+            <option value="qwen2.5-2b">Qwen 2.5 (2B Params)</option>
+          </select>
+        </div>
 
-          {/* Personality and Expertise */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Typography variant="subtitle1" gutterBottom>
-                Personality
-              </Typography>
-              <Select
-                fullWidth
-                value={config.personality}
-                onChange={(e) =>
-                  handleConfigChange("personality", e.target.value)
-                }
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  Select personality
-                </MenuItem>
-                <MenuItem value="friendly">Friendly and Approachable</MenuItem>
-                <MenuItem value="professional">
-                  Professional and Formal
-                </MenuItem>
-                <MenuItem value="witty">Witty and Humorous</MenuItem>
-                <MenuItem value="empathetic">
-                  Empathetic and Supportive
-                </MenuItem>
-              </Select>
-            </div>
-            <div>
-              <Typography variant="subtitle1" gutterBottom>
-                Primary Expertise
-              </Typography>
-              <Select
-                fullWidth
-                value={config.primaryExpertise}
-                onChange={(e) =>
-                  handleConfigChange("primaryExpertise", e.target.value)
-                }
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  Select primary expertise
-                </MenuItem>
-                <MenuItem value="general">General Knowledge</MenuItem>
-                <MenuItem value="tech">Technology and Programming</MenuItem>
-                <MenuItem value="health">Health and Wellness</MenuItem>
-                <MenuItem value="finance">Finance and Economics</MenuItem>
-                <MenuItem value="creative">Creative Writing</MenuItem>
-                <MenuItem value="legal">Legal</MenuItem>
-                <MenuItem value="scientific">Scientific Research</MenuItem>
-              </Select>
-            </div>
-          </div>
+        <div className="form-group">
+          <label htmlFor="personality">Personality</label>
+          <select
+            id="personality"
+            value={config.personality}
+            onChange={(e) => handleConfigChange("personality", e.target.value)}
+          >
+            <option value="" disabled>
+              Select personality
+            </option>
+            <option value="friendly">Friendly and Approachable</option>
+            <option value="professional">Professional and Formal</option>
+            <option value="witty">Witty and Humorous</option>
+            <option value="empathetic">Empathetic and Supportive</option>
+          </select>
+        </div>
 
-          {/* Communication Style, Creativity, and Response Length Sliders */}
-          <div className="space-y-4">
-            <div>
-              <Typography variant="subtitle1" gutterBottom>
-                Communication Style
-              </Typography>
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={config.communicationStyle}
-                onChange={(_, value) =>
-                  handleConfigChange("communicationStyle", value)
-                }
-                valueLabelDisplay="auto"
-              />
-              <div className="flex justify-between mt-1">
-                <Typography variant="caption">Concise</Typography>
-                <Typography variant="caption">Detailed</Typography>
-              </div>
-            </div>
-            <div>
-              <Typography variant="subtitle1" gutterBottom>
-                Creativity Level
-              </Typography>
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={config.creativityLevel}
-                onChange={(_, value) =>
-                  handleConfigChange("creativityLevel", value)
-                }
-                valueLabelDisplay="auto"
-              />
-              <div className="flex justify-between mt-1">
-                <Typography variant="caption">Conservative</Typography>
-                <Typography variant="caption">Highly Creative</Typography>
-              </div>
-            </div>
-            <div>
-              <Typography variant="subtitle1" gutterBottom>
-                Preferred Response Length
-              </Typography>
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={config.responseLength}
-                onChange={(_, value) =>
-                  handleConfigChange("responseLength", value)
-                }
-                valueLabelDisplay="auto"
-              />
-              <div className="flex justify-between mt-1">
-                <Typography variant="caption">Brief</Typography>
-                <Typography variant="caption">Comprehensive</Typography>
-              </div>
-            </div>
-          </div>
+        <div className="form-group">
+          <label htmlFor="primaryExpertise">Primary Expertise</label>
+          <select
+            id="primaryExpertise"
+            value={config.primaryExpertise}
+            onChange={(e) =>
+              handleConfigChange("primaryExpertise", e.target.value)
+            }
+          >
+            <option value="" disabled>
+              Select primary expertise
+            </option>
+            <option value="general">General Knowledge</option>
+            <option value="tech">Technology and Programming</option>
+            <option value="health">Health and Wellness</option>
+            <option value="finance">Finance and Economics</option>
+            <option value="creative">Creative Writing</option>
+            <option value="legal">Legal</option>
+            <option value="scientific">Scientific Research</option>
+          </select>
+        </div>
 
-          {/* Memory Modules */}
-          <div>
-            <Typography variant="subtitle1" gutterBottom>
-              Memory Modules (RAG)
-            </Typography>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.memoryModules.includes("regular")}
-                  onChange={() =>
-                    handleArrayConfigChange("memoryModules", "regular")
-                  }
-                />
-              }
-              label="Regular Memory"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.memoryModules.includes("legal")}
-                  onChange={() =>
-                    handleArrayConfigChange("memoryModules", "legal")
-                  }
-                />
-              }
-              label="Legal Database"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.memoryModules.includes("medical")}
-                  onChange={() =>
-                    handleArrayConfigChange("memoryModules", "medical")
-                  }
-                />
-              }
-              label="Medical Database"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.memoryModules.includes("scientific")}
-                  onChange={() =>
-                    handleArrayConfigChange("memoryModules", "scientific")
-                  }
-                />
-              }
-              label="Scientific Papers"
-            />
+        <div className="form-group">
+          <label>Communication Style</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={config.communicationStyle}
+            onChange={(e) =>
+              handleConfigChange("communicationStyle", parseInt(e.target.value))
+            }
+          />
+          <div className="slider-labels">
+            <span>Concise</span>
+            <span>Detailed</span>
           </div>
+        </div>
 
-          {/* Tool Integrations */}
-          <div>
-            <Typography variant="subtitle1" gutterBottom>
-              Tool Integrations
-            </Typography>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.toolIntegrations.includes("web-search")}
-                  onChange={() =>
-                    handleArrayConfigChange("toolIntegrations", "web-search")
-                  }
-                />
-              }
-              label="Web Search"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.toolIntegrations.includes("calculator")}
-                  onChange={() =>
-                    handleArrayConfigChange("toolIntegrations", "calculator")
-                  }
-                />
-              }
-              label="Calculator"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.toolIntegrations.includes("text-to-speech")}
+        <div className="form-group">
+          <label>Creativity Level</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={config.creativityLevel}
+            onChange={(e) =>
+              handleConfigChange("creativityLevel", parseInt(e.target.value))
+            }
+          />
+          <div className="slider-labels">
+            <span>Conservative</span>
+            <span>Highly Creative</span>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Preferred Response Length</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={config.responseLength}
+            onChange={(e) =>
+              handleConfigChange("responseLength", parseInt(e.target.value))
+            }
+          />
+          <div className="slider-labels">
+            <span>Brief</span>
+            <span>Comprehensive</span>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Memory Modules (RAG)</label>
+          <div className="checkbox-group">
+            {[
+              "Regular Memory",
+              "Legal Database",
+              "Medical Database",
+              "Scientific Papers",
+            ].map((module) => (
+              <label key={module}>
+                <input
+                  type="checkbox"
+                  checked={config.memoryModules.includes(
+                    module.toLowerCase().replace(" ", "-")
+                  )}
                   onChange={() =>
                     handleArrayConfigChange(
-                      "toolIntegrations",
-                      "text-to-speech"
+                      "memoryModules",
+                      module.toLowerCase().replace(" ", "-")
                     )
                   }
                 />
-              }
-              label="Text-to-Speech"
-            />
-          </div>
-
-          {/* Code Execution */}
-          <FormControlLabel
-            control={
-              <Switch
-                checked={config.executeCode}
-                onChange={(e) =>
-                  handleConfigChange("executeCode", e.target.checked)
-                }
-              />
-            }
-            label="Allow Code Execution"
-          />
-
-          {/* Always-On Mode */}
-          <FormControlLabel
-            control={
-              <Switch
-                checked={config.alwaysOn}
-                onChange={(e) =>
-                  handleConfigChange("alwaysOn", e.target.checked)
-                }
-              />
-            }
-            label="Always-On Mode (Second Brain)"
-          />
-
-          {/* Ethical Boundaries */}
-          <div>
-            <Typography variant="subtitle1" gutterBottom>
-              Ethical Boundaries
-            </Typography>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.ethicalBoundaries.includes("no-harm")}
-                  onChange={() =>
-                    handleArrayConfigChange("ethicalBoundaries", "no-harm")
-                  }
-                />
-              }
-              label="Prevent Harmful Actions"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.ethicalBoundaries.includes("privacy")}
-                  onChange={() =>
-                    handleArrayConfigChange("ethicalBoundaries", "privacy")
-                  }
-                />
-              }
-              label="Respect Privacy"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.ethicalBoundaries.includes("truthful")}
-                  onChange={() =>
-                    handleArrayConfigChange("ethicalBoundaries", "truthful")
-                  }
-                />
-              }
-              label="Always Be Truthful"
-            />
-          </div>
-
-          {/* Language Proficiency */}
-          <div>
-            <Typography variant="subtitle1" gutterBottom>
-              Language Proficiency
-            </Typography>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.languageProficiency.includes("english")}
-                  onChange={() =>
-                    handleArrayConfigChange("languageProficiency", "english")
-                  }
-                />
-              }
-              label="English"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.languageProficiency.includes("spanish")}
-                  onChange={() =>
-                    handleArrayConfigChange("languageProficiency", "spanish")
-                  }
-                />
-              }
-              label="Spanish"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={config.languageProficiency.includes("mandarin")}
-                  onChange={() =>
-                    handleArrayConfigChange("languageProficiency", "mandarin")
-                  }
-                />
-              }
-              label="Mandarin"
-            />
-          </div>
-
-          {/* Voice Interface */}
-          <FormControlLabel
-            control={
-              <Switch
-                checked={config.voiceInterface}
-                onChange={(e) =>
-                  handleConfigChange("voiceInterface", e.target.checked)
-                }
-              />
-            }
-            label="Enable Voice Interface"
-          />
-
-          {/* Learning Rate */}
-          <div>
-            <Typography variant="subtitle1" gutterBottom>
-              Learning Rate
-            </Typography>
-            <Slider
-              min={0}
-              max={100}
-              step={1}
-              value={config.learningRate}
-              onChange={(_, value) => handleConfigChange("learningRate", value)}
-              valueLabelDisplay="auto"
-            />
-            <div className="flex justify-between mt-1">
-              <Typography variant="caption">Stable</Typography>
-              <Typography variant="caption">Highly Adaptive</Typography>
-            </div>
-          </div>
-
-          {/* Speech-to-Text */}
-          <FormControlLabel
-            control={
-              <Switch
-                checked={config.speechToText}
-                onChange={(e) =>
-                  handleConfigChange("speechToText", e.target.checked)
-                }
-              />
-            }
-            label="Enable Speech-to-Text"
-          />
-
-          {/* Generate AI Profile */}
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={handleGenerateAIProfile}
-            disabled={loading}
-          >
-            {loading ? (
-              <CircularProgress size={24} />
-            ) : (
-              "Generate AI Assistant Profile"
-            )}
-          </Button>
-
-          {/* Fine-tuning and Deployment */}
-          <div className="flex space-x-4">
-            <Button
-              variant="contained"
-              color="secondary"
-              fullWidth
-              onClick={handleFineTuneModel}
-              disabled={loading || !aiProfile}
-            >
-              {loading ? <CircularProgress size={24} /> : "Fine-tune Model"}
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              fullWidth
-              onClick={handleDeployAIAssistant}
-              disabled={loading || !aiProfile}
-            >
-              {loading ? <CircularProgress size={24} /> : "Deploy AI Assistant"}
-            </Button>
+                {module}
+              </label>
+            ))}
           </div>
         </div>
-      </CardContent>
 
-      <AIAssistantSummary
-        config={config}
-        aiProfile={aiProfile}
-        open={showSummary}
-        onClose={handleCloseSummary}
-      />
+        <div className="form-group">
+          <label>Tool Integrations</label>
+          <div className="checkbox-group">
+            {["Web Search", "Calculator", "Text-to-Speech"].map((tool) => (
+              <label key={tool}>
+                <input
+                  type="checkbox"
+                  checked={config.toolIntegrations.includes(
+                    tool.toLowerCase().replace(/\s+/g, "-")
+                  )}
+                  onChange={() =>
+                    handleArrayConfigChange(
+                      "toolIntegrations",
+                      tool.toLowerCase().replace(/\s+/g, "-")
+                    )
+                  }
+                />
+                {tool}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={config.executeCode}
+              onChange={(e) =>
+                handleConfigChange("executeCode", e.target.checked)
+              }
+            />
+            Allow Code Execution
+          </label>
+        </div>
 
-      {/* Snackbar for Notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={config.alwaysOn}
+              onChange={(e) => handleConfigChange("alwaysOn", e.target.checked)}
+            />
+            Always-On Mode (Second Brain)
+          </label>
+        </div>
+
+        <div className="form-group">
+          <label>Ethical Boundaries</label>
+          <div className="checkbox-group">
+            {[
+              "Prevent Harmful Actions",
+              "Respect Privacy",
+              "Always Be Truthful",
+            ].map((boundary) => (
+              <label key={boundary}>
+                <input
+                  type="checkbox"
+                  checked={config.ethicalBoundaries.includes(
+                    boundary.toLowerCase().replace(" ", "-")
+                  )}
+                  onChange={() =>
+                    handleArrayConfigChange(
+                      "ethicalBoundaries",
+                      boundary.toLowerCase().replace(" ", "-")
+                    )
+                  }
+                />
+                {boundary}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Language Proficiency</label>
+          <div className="checkbox-group">
+            {["English", "Spanish", "Mandarin"].map((language) => (
+              <label key={language}>
+                <input
+                  type="checkbox"
+                  checked={config.languageProficiency.includes(
+                    language.toLowerCase()
+                  )}
+                  onChange={() =>
+                    handleArrayConfigChange(
+                      "languageProficiency",
+                      language.toLowerCase()
+                    )
+                  }
+                />
+                {language}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={config.voiceInterface}
+              onChange={(e) =>
+                handleConfigChange("voiceInterface", e.target.checked)
+              }
+            />
+            Enable Voice Interface
+          </label>
+        </div>
+
+        <div className="form-group">
+          <label>Learning Rate</label>
+          <input
+            type="range"
+            min="0.0001"
+            max="0.01"
+            step="0.0001"
+            value={config.learningRate}
+            onChange={(e) =>
+              handleConfigChange("learningRate", parseFloat(e.target.value))
+            }
+          />
+          <div className="slider-labels">
+            <span>Stable</span>
+            <span>Highly Adaptive</span>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={config.speechToText}
+              onChange={(e) =>
+                handleConfigChange("speechToText", e.target.checked)
+              }
+            />
+            Enable Speech-to-Text
+          </label>
+        </div>
+
+        <button
+          type="button"
+          className="button"
+          onClick={handleGenerateAIProfile}
+          disabled={loading}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Card>
+          {loading ? "Generating..." : "Generate AI Profile"}
+        </button>
+      </form>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {showSummary && (
+        <AIAssistantSummary
+          config={config}
+          aiProfile={aiProfile}
+          open={showSummary}
+          onClose={handleCloseSummary}
+        />
+      )}
+    </div>
   );
 };
 
