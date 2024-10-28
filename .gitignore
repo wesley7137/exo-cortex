@@ -6,6 +6,22 @@ frontend/node_modules/
 .pnp.js
 /backend/tts/
 /cortex/
+
+# Large design files
+device/designs/all_designs.blend
+device/designs/all_designs.blend1
+device/designs/SINGLE_EAR_1027.obj
+backend/device/designs/all_designs.blend
+backend/device/designs/all_designs.blend1
+backend/device/designs/SINGLE_EAR_1027.obj
+"backend/device/designs/SINGLE EAR 1027.obj"
+
+
+# Directories
+.history/
+device/designs/
+backend/device/designs/
+
 # testing
 /coverage
 

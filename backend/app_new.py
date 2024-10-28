@@ -1,7 +1,5 @@
 import secrets
 from bson.objectid import ObjectId
-
-
 import sys
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -27,25 +25,55 @@ from models import (
 import joblib
 from stable_baselines3 import PPO
 from ai_model.agent_manager import get_agent_manager
+from flask_socketio import SocketIO, emit
+import numpy as np
+from datetime import datetime
 
 
+import eventlet
+eventlet.monkey_patch()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-
-
-
+# Initialize Flask and SocketIO
 app = Flask(__name__)
-app.secret_key = 'admin'  # Set a secret key for sessions
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
-# Initialize database
+app.config['SECRET_KEY'] = 'admin'
+socketio = SocketIO(app, 
+                   cors_allowed_origins="*",
+                   async_mode='eventlet',
+                   ping_timeout=10,
+                   ping_interval=5)
 
-# Configure logging
+# Configure CORS
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
+# WebSocket routes
+@socketio.on('connect', namespace='/ws/audio')
+def handle_connect():
+    logger.info("Client connected to audio websocket")
+    emit('connection_status', {'status': 'connected'})
 
+@socketio.on('disconnect', namespace='/ws/audio')
+def handle_disconnect():
+    logger.info("Client disconnected from audio websocket")
+
+@socketio.on('audio_data', namespace='/ws/audio')
+def handle_audio_data(data):
+    try:
+        # Process the audio data
+        logger.info(f"Received audio data of size: {len(data)}")
+        # Echo back the processed data
+        emit('audio_response', {'status': 'processed', 'data': data})
+    except Exception as e:
+        logger.error(f"Error processing audio data: {e}")
+        emit('error', {'message': str(e)})
+
+@socketio.on_error_default
+def default_error_handler(e):
+    logger.error(f"SocketIO error: {e}")
+    return {"error": str(e)}
 # Example in-memory storage for AI profiles and deployments
 ai_profiles = {}
 deployments = {}
@@ -68,40 +96,63 @@ def save_model(model, filename):
     else:
         joblib.dump(model, os.path.join(MODEL_SAVE_PATH, filename))
 
-def load_model(filename, model_type):
+# Error handler for CORS
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+def load_model(filename):
     try:
-        if model_type == 'rl_agent':
-            model = PPO.load(os.path.join(MODEL_SAVE_PATH, filename))
-            return PPOAgent(model=model)
-        else:
-            return joblib.load(os.path.join(MODEL_SAVE_PATH, filename))
-    except FileNotFoundError:
+        # Define custom objects for loading the model
+        custom_objects = {
+            'learning_rate': 0.0003,
+            'clip_range': lambda x: 0.2,
+            'lr_schedule': lambda _: 0.0003
+        }
+        
+        # Load the model with custom objects
+        model = PPO.load(filename, custom_objects=custom_objects)
+        return model
+    except Exception as e:
+        logger.error(f"Error loading model: {e}")
         return None
 
 def initialize_models():
     global rl_agent, gnn_model
-    
-    # Try to load the RL agent
-    rl_agent = load_model(RL_AGENT_FILE, 'rl_agent')
-    if rl_agent is None:
-        logger.info("Training new RL agent...")
-        rl_agent = PPOAgent(total_timesteps=10000)
-        rl_agent.train()
-        save_model(rl_agent, RL_AGENT_FILE)
-        logger.info("RL agent training completed and saved.")
-    else:
-        logger.info("Loaded pre-trained RL agent.")
-    
-    # Try to load the GNN model
-    gnn_model = load_model(GNN_MODEL_FILE, 'gnn_model')
-    if gnn_model is None:
-        logger.info("Initializing new GNN model...")
-        gnn_model = GNNModelWrapper(input_dim=10, hidden_dim=16, output_dim=4)
-        gnn_model.initialize_model()
-        save_model(gnn_model, GNN_MODEL_FILE)
-        logger.info("GNN model initialized and saved.")
-    else:
-        logger.info("Loaded pre-trained GNN model.")
+    try:
+        # Initialize RL agent with custom objects
+        custom_objects = {
+            'learning_rate': 0.0003,
+            'clip_range': lambda x: 0.2,
+            'lr_schedule': lambda _: 0.0003
+        }
+        rl_agent = load_model(RL_AGENT_FILE)
+        if rl_agent is None:
+            logger.info("Training new RL agent...")
+            rl_agent = PPOAgent(total_timesteps=10000)
+            rl_agent.train()
+            save_model(rl_agent, RL_AGENT_FILE)
+            logger.info("RL agent training completed and saved.")
+        else:
+            logger.info("Loaded pre-trained RL agent.")
+        
+        # Initialize GNN model
+        gnn_model = load_model(GNN_MODEL_FILE)
+        if gnn_model is None:
+            logger.info("Initializing new GNN model...")
+            gnn_model = GNNModelWrapper(input_dim=10, hidden_dim=16, output_dim=4)
+            gnn_model.initialize_model()
+            save_model(gnn_model, GNN_MODEL_FILE)
+            logger.info("GNN model initialized and saved.")
+        else:
+            logger.info("Loaded pre-trained GNN model.")
+    except Exception as e:
+        logger.error(f"Error initializing models: {e}")
+        raise
 
 
 
@@ -653,25 +704,6 @@ def api_list_ai_profiles():
 
 
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -679,7 +711,8 @@ def after_request(response):
 # Run the Flask app
 # -------------------------------
 def run_server():
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True)  # Set debug=False for production
+    # Replace the existing run_server function with this
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
 
 def run_voice_interface():
     voice_interface = VoiceInterface()
@@ -695,21 +728,49 @@ def run_cli():
     cli.run()
 
 
-def main():
-    initialize_models()  # Initialize or load RL agent and GNN model
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        if command == 'runserver':
-            run_server()
-        elif command == 'voice':
-            run_voice_interface()
-        elif command == 'cli':
-            run_cli()
+def initialize_models():
+    global rl_agent, gnn_model
+    
+    try:
+        # Initialize RL agent with custom objects
+        custom_objects = {
+            'learning_rate': 0.0003,
+            'lr_schedule': lambda _: 0.0003
+        }
+        rl_agent = load_model(RL_AGENT_FILE, 'rl_agent')
+        if rl_agent is None:
+            logger.info("Training new RL agent...")
+            rl_agent = PPOAgent(total_timesteps=10000)
+            rl_agent.train()
+            save_model(rl_agent, RL_AGENT_FILE)
+            logger.info("RL agent training completed and saved.")
         else:
-            logger.error(f"Unknown command: {command}")
-            print("Usage: python app_new.py [runserver|voice|cli]")
-    else:
-        run_server()  # Default action
+            logger.info("Loaded pre-trained RL agent.")
+        
+        # Initialize GNN model
+        gnn_model = load_model(GNN_MODEL_FILE, 'gnn_model')
+        if gnn_model is None:
+            logger.info("Initializing new GNN model...")
+            gnn_model = GNNModelWrapper(input_dim=10, hidden_dim=16, output_dim=4)
+            gnn_model.initialize_model()
+            save_model(gnn_model, GNN_MODEL_FILE)
+            logger.info("GNN model initialized and saved.")
+        else:
+            logger.info("Loaded pre-trained GNN model.")
+            
+    except Exception as e:
+        logger.error(f"Error initializing models: {e}")
+        raise
+
 
 if __name__ == '__main__':
-    main()
+    try:
+        initialize_models()
+        # Run with eventlet
+        socketio.run(app, 
+                    host='0.0.0.0', 
+                    port=5000, 
+                    debug=True,
+                    use_reloader=False)
+    except Exception as e:
+        logger.error(f"Server startup error: {e}")
