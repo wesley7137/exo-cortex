@@ -5,7 +5,7 @@ The ExoCortex device is designed to function as a wearable AI peripheral that ac
 Device Overview:
 
 Form Factor:
-The new form factor closely resembles a slim and ergonomic bone conduction headset design (as in the images), allowing the device to be worn comfortably for long periods. The main body will house the electronics, including the ESP32 board, battery, microphone, and camera. The design allows the camera to face forward while the components are evenly distributed for balance and comfort.
+The new form factor closely resembles a slim and ergonomic open-ear headset design (as in the images), allowing the device to be worn comfortably for long periods. The main body will house the electronics, including the ESP32 board, battery, microphone, and camera. The design allows the camera to face forward while the components are evenly distributed for balance and comfort.
 
 Main Components:
 
@@ -81,88 +81,3 @@ Hardware Components:
     Microphone Port: Discreet port near the front to capture clear sound.
     Battery Compartment: Positioned behind the ear for weight distribution.
     Charging Port: USB-C or micro-USB near the back of the device for easy charging.
-
-DESIGN CONCEPTS VERSION 1:
-
-The headset design is based on a bone conduction ergonomic form factor, offering a sleek, lightweight frame for all-day comfort. The main frame is made from flexible, durable material that curves gently to conform to the user’s head, similar to the shape of high-end sports bone conduction headphones.
-
-Frame: The headband is a smooth, slim structure with rounded edges for an unobtrusive profile. It is slightly thicker at the back, allowing the weight to be evenly distributed. The frame curves around the ears, leaving them free, while the rest of the band wraps around the back of the head for stability.
-
-Ear Sections: The ear rests are cuboid-shaped and slightly thicker than the main band to house small components such as the battery and microphone. These cuboids are sleek, with rounded edges to avoid discomfort and ensure the overall design appears flush against the headband. The ear section features subtle ergonomic angling, making sure it rests snugly above the ear without slipping.
-
-Components Housing: The device will house electronics such as an ESP32 board, battery, microphone, and camera. The housing is located mostly behind the ears, ensuring that the weight is distributed without causing strain. The electronics are encased within the cuboid structures near the ears, with a microphone embedded near the mouth area and a camera placed discreetly on the front section, pointing forward.
-
-Camera Placement: The forward-facing camera is subtly embedded in the front area of the headband, allowing for clear recording or capturing of visuals. The camera’s design seamlessly blends into the overall frame without protrusion, making it almost invisible when not in use.
-
-Button Integration: Discreet control buttons are located on one side of the device, allowing for easy access to power, volume control, and other functional elements without detracting from the sleek, minimalist design.
-
-Balance and Comfort: The internal components are evenly distributed across both sides of the frame for balance. This avoids pressure points on the ears or back of the head. The device is light enough for prolonged use, with slightly thicker sections behind the ears to stabilize and counterbalance the camera at the front.
-
-DESIGN CONCEPTS VERSION 2:
-Description:
-The design now shifts to a side-mounted electronics housing connected via an elastic band that wraps around the head, similar to the way headlamps or certain sports headsets are worn. The main electronic components (ESP32, battery, microphone, camera) are housed in a slim, sleek side piece. This side housing includes an earpiece integrated into the design, which rests over or near one ear for balanced weight distribution and functionality. The camera would protrude slightly from this housing, allowing forward-facing visuals while the other components are comfortably fitted in the same enclosure.
-
-The elastic band keeps the device secure and comfortable around the head without the need for a full 3D-printed headband. This setup not only simplifies production but also increases flexibility, as users can adjust the fit to their head size. The slim side-mounted housing ensures the device is less obtrusive and lightweight, making it ideal for long-term wear.
-
-Looking at your shopping cart and components list, you have:
-
-    Ferwooh 6PCS Mini Breadboard Kit with jumper cables
-    Heat shrink tubing kit
-    HiLetgo CP2102 USB to TTL Module
-    DORHEA ESP32-CAM board with OV2640 camera
-    PowerBoost 1000C (already owned)
-    OV2640 camera module 75-degree wide angle (already owned)
-    Lithium ion battery (already owned)
-    I2S MEMS Microphone (already owned)
-    Bluetooth LE module (already owned)
-    Small speakers (already owned)
-
-For your Google Glass-style headpiece project, you have all the essential components. The only additional items you might want to consider are:
-Optional but Useful
-
-    Small zip ties for cable management
-    Double-sided tape or mounting adhesive
-    Kapton tape for insulating components
-    Small screwdriver set for any adjustments
-
-Component Placement
-Camera Module (OV2640-75MM)
-
-    Position at front/temple area
-    Use the 75mm flex cable to route behind the ear
-    Angle slightly downward for natural field of view
-
-ESP32 Board
-
-    Place behind the ear where the temple piece widens
-    This provides more surface area for mounting
-    Helps balance weight distribution
-
-Power/Charging
-
-    PowerBoost 1000C near ESP32
-    USB charging port positioned at bottom/rear of temple piece
-    Easy access for charging while device is off
-
-Audio Components
-
-    Speaker
-
-    Position near but not directly on ear
-    Angle toward ear canal
-    Consider bone conduction placement option
-
-    MEMS Microphone
-
-    Place near mouth/jaw area
-    Keep away from speaker to prevent feedback
-    Angle toward mouth for better voice capture
-
-Design Considerations
-
-    Route flex cables and wires through temple piece interior
-    Add ventilation holes for heat dissipation near ESP32
-    Include small LED status indicators visible to user
-    Consider making temple piece slightly wider to accommodate components
-    Use heat shrink tubing for wire management
-    Add strain relief for charging port
