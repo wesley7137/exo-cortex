@@ -8,7 +8,7 @@ frontend/node_modules/
 /cortex/
 
 # Large design files
-device/designs/all_designs.blend
+device/designs/
 device/designs/all_designs.blend1
 device/designs/SINGLE_EAR_1027.obj
 backend/device/designs/all_designs.blend

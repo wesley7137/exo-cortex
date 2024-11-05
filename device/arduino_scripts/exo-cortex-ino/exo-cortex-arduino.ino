@@ -5,14 +5,16 @@
 #include <WiFi.h>
 #include <WebSocketsClient.h>
 #include <HTTPClient.h>
+#include "esp_afe_sr_iface.h"
+#include "esp_afe_sr_models.h"
+#include <ESP_I2S.h>
 
 // WiFi credentials
 const char* ssid = "17K2.4";
 const char* password = "9852587137";
 
 // WebSocket server details
-const char* ws_server_url = "192.168.1.254";
-const uint16_t ws_server_port = 5005;
+const char* ws_server_url = "server.build-a-bf.com";
 const char* ws_path = "/ws";
 
 // BLE Service and Characteristic UUIDs
@@ -27,51 +29,67 @@ bool deviceConnected = false;
 // WebSocket client instance
 WebSocketsClient webSocket;
 
-// Add connection state tracking at the top of the file, before it's used
-bool wsConnected = false;
-unsigned long lastConnectionAttempt = 0;
-const unsigned long connectionTimeout = 10000; // 10 seconds timeout
+#define USE_SERIAL Serial
 
-// WebSocket event handler with enhanced debugging
+// Utility function for hex dumps
+void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
+    const uint8_t* src = (const uint8_t*) mem;
+    USE_SERIAL.printf("\n[HEXDUMP] Address: 0x%08X len: 0x%X (%d)", (ptrdiff_t)src, len, len);
+    for(uint32_t i = 0; i < len; i++) {
+        if(i % cols == 0) {
+            USE_SERIAL.printf("\n[0x%08X] 0x%08X: ", (ptrdiff_t)src, i);
+        }
+        USE_SERIAL.printf("%02X ", *src);
+        src++;
+    }
+    USE_SERIAL.printf("\n");
+}
+
+// WebSocket event handler
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     switch(type) {
         case WStype_DISCONNECTED:
-            Serial.println("WebSocket Disconnected");
-            wsConnected = false;
-            Serial.println("Will attempt reconnection automatically...");
+            USE_SERIAL.printf("[WSc] Disconnected!\n");
             break;
             
         case WStype_CONNECTED:
-            Serial.println("WebSocket Connected!");
-            wsConnected = true;
-            Serial.printf("Connected to: %s:%d%s\n", ws_server_url, ws_server_port, ws_path);
+            USE_SERIAL.printf("[WSc] Connected to url: %s\n", payload);
             // Send initial message
             webSocket.sendTXT("{\"type\":\"hello\",\"client\":\"ESP32\"}");
             break;
             
         case WStype_TEXT:
-            Serial.printf("Received Text: %s\n", payload);
+            USE_SERIAL.printf("[WSc] get text: %s\n", payload);
+            // Forward text data to BLE if connected
+            if (deviceConnected && pCharacteristic) {
+                pCharacteristic->setValue((uint8_t*)payload, length);
+                pCharacteristic->notify();
+            }
             break;
             
         case WStype_BIN:
-            Serial.printf("Received binary: %u bytes\n", length);
-            if (deviceConnected) {
+            USE_SERIAL.printf("[WSc] get binary length: %u\n", length);
+            hexdump(payload, length);
+            // Forward binary data to BLE if connected
+            if (deviceConnected && pCharacteristic) {
                 pCharacteristic->setValue(payload, length);
                 pCharacteristic->notify();
             }
             break;
             
         case WStype_ERROR:
-            Serial.println("WebSocket Error!");
-            wsConnected = false;
+            USE_SERIAL.println("[WSc] Error occurred!");
             break;
             
         case WStype_PING:
-            Serial.println("Ping received");
+            USE_SERIAL.println("[WSc] Ping received");
             break;
             
         case WStype_PONG:
-            Serial.println("Pong received");
+            USE_SERIAL.println("[WSc] Pong received");
+            break;
+            
+        default:
             break;
     }
 }
@@ -79,100 +97,16 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 // BLE Server Callbacks
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
-      Serial.println("BLE Client Connected");
+        deviceConnected = true;
+        USE_SERIAL.println("BLE Client Connected");
     };
 
     void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
-      Serial.println("BLE Client Disconnected");
+        deviceConnected = false;
+        USE_SERIAL.println("BLE Client Disconnected");
     }
 };
 
-// Function to connect to WiFi
-void connectToWiFi() {
-    Serial.printf("Connecting to WiFi network: %s\n", ssid);
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(1000);
-        Serial.print(".");
-    }
-    Serial.println("\nWiFi connected!");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-}
-
-// Add these variables at the top with other constants
-const char* http_server_url = "http://192.168.1.254:5005";
-bool http_test_passed = false;
-
-// Add this function to test HTTP connectivity
-bool testHTTPConnection() {
-    HTTPClient http;
-    
-    Serial.println("Testing HTTP connection...");
-    String test_url = String(http_server_url) + "/esp32-test";
-    
-    Serial.printf("Connecting to: %s\n", test_url.c_str());
-    http.begin(test_url);
-    
-    int httpCode = http.GET();
-    
-    if (httpCode > 0) {
-        Serial.printf("HTTP Response code: %d\n", httpCode);
-        String payload = http.getString();
-        Serial.printf("Response: %s\n", payload.c_str());
-        
-        http.end();
-        return httpCode == 200;
-    }
-    else {
-        Serial.printf("HTTP GET failed, error: %s\n", http.errorToString(httpCode).c_str());
-        http.end();
-        return false;
-    }
-}
-
-// Modify the setup function
-void setup() {
-    Serial.begin(115200);
-    delay(1000);
-    Serial.println("\nStarting ESP32...");
-
-    // Connect to WiFi
-    connectToWiFi();
-
-    // Test HTTP connection first
-    if (testHTTPConnection()) {
-        Serial.println("HTTP test passed! Proceeding with WebSocket connection...");
-        http_test_passed = true;
-    } else {
-        Serial.println("HTTP test failed! Check server address and port.");
-        http_test_passed = false;
-    }
-
-    // Only proceed with WebSocket if HTTP test passed
-    if (http_test_passed) {
-        // Initialize WebSocket with more detailed configuration
-        Serial.println("Initializing WebSocket connection...");
-        webSocket.begin(ws_server_url, ws_server_port, ws_path);
-        webSocket.onEvent(webSocketEvent);
-        webSocket.setReconnectInterval(5000);
-        webSocket.enableHeartbeat(15000, 3000, 2);
-        
-        // Set additional WebSocket options
-        webSocket.setExtraHeaders("User-Agent: ESP32\r\nOrigin: ESP32Client");
-        
-        Serial.printf("Attempting connection to WebSocket server: %s:%d%s\n", 
-                     ws_server_url, ws_server_port, ws_path);
-    }
-
-    // Initialize BLE
-    initializeBLE();
-}
-
-// Add this function to initialize BLE (moved from setup)
 void initializeBLE() {
     BLEDevice::init("ESP32-S3 BLE Server");
     pServer = BLEDevice::createServer();
@@ -180,57 +114,159 @@ void initializeBLE() {
 
     BLEService *pService = pServer->createService(SERVICE_UUID);
     pCharacteristic = pService->createCharacteristic(
-                        CHARACTERISTIC_UUID,
-                        BLECharacteristic::PROPERTY_READ   |
-                        BLECharacteristic::PROPERTY_WRITE  |
-                        BLECharacteristic::PROPERTY_NOTIFY |
-                        BLECharacteristic::PROPERTY_INDICATE
-                      );
+        CHARACTERISTIC_UUID,
+        BLECharacteristic::PROPERTY_READ   |
+        BLECharacteristic::PROPERTY_WRITE  |
+        BLECharacteristic::PROPERTY_NOTIFY |
+        BLECharacteristic::PROPERTY_INDICATE
+    );
 
     pCharacteristic->addDescriptor(new BLE2902());
     pService->start();
     pServer->getAdvertising()->start();
-    Serial.println("BLE service started, waiting for client connection...");
+    USE_SERIAL.println("BLE service started, waiting for client connection...");
+}
+
+// Modify the I2S pin definitions to match XIAO ESP32-S3 Sense
+#define I2S_WS_PIN 42  // PDM Clock
+#define I2S_SD_PIN 41  // PDM Data
+#define I2S_PORT I2S_NUM_0
+
+// Function to initialize I2S for XIAO ESP32-S3 Sense
+void initializeI2S() {
+    // Configure I2S for PDM microphone
+    I2S.setPinsPdmRx(I2S_WS_PIN, I2S_SD_PIN);
+    
+    // Initialize I2S with PDM mode
+    if (!I2S.begin(I2S_MODE_PDM_RX, 16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO)) {
+        USE_SERIAL.println("Failed to initialize I2S!");
+        while (1); // do nothing
+    }
+}
+
+// AFE configuration
+static esp_afe_sr_iface_t *afe_handle = NULL;
+static esp_afe_sr_data_t *afe_data = NULL;
+static int audio_chunksize;
+static int16_t *audio_buffer = NULL;
+static bool is_recording = false;
+
+// Function to initialize AFE
+void initializeAFE() {
+    afe_handle = &ESP_AFE_SR_HANDLE;
+    afe_config_t afe_config = AFE_CONFIG_DEFAULT();
+    
+    // Configure AFE
+    afe_config.aec_init = false;        // Disable AEC since we don't need echo cancellation
+    afe_config.se_init = true;          // Enable noise suppression
+    afe_config.vad_init = true;         // Enable Voice Activity Detection
+    afe_config.wakenet_init = true;     // Enable wake word detection
+    afe_config.voice_communication_init = false;
+    afe_config.wakenet_model_name = "wn9_hilexin";  // Use "Hi Lexin" as wake word
+    afe_config.wakenet_mode = DET_MODE_90;          // Single channel mode
+    afe_config.afe_mode = SR_MODE_LOW_COST;
+    afe_config.pcm_config.total_ch_num = 1;
+    afe_config.pcm_config.mic_num = 1;
+    afe_config.pcm_config.ref_num = 0;
+
+    // Create AFE instance
+    afe_data = afe_handle->create_from_config(&afe_config);
+    if (!afe_data) {
+        USE_SERIAL.println("Failed to create AFE instance");
+        return;
+    }
+
+    // Get the required audio chunk size
+    audio_chunksize = afe_handle->get_feed_chunksize(afe_data);
+    audio_buffer = (int16_t*)malloc(audio_chunksize * sizeof(int16_t));
+}
+
+void setup() {
+    USE_SERIAL.begin(115200);
+    delay(1000);
+    
+    USE_SERIAL.println("\nStarting ESP32...");
+
+    // Setup WiFi - using direct WiFi.begin(), NOT wifiMulti
+    USE_SERIAL.println("Connecting to WiFi...");
+    WiFi.begin(ssid, password);
+
+    while (WiFi.status() != WL_CONNECTED) {
+        USE_SERIAL.print(".");
+        delay(500);
+    }
+    USE_SERIAL.println("\nWiFi connected!");
+    USE_SERIAL.print("IP Address: ");
+    USE_SERIAL.println(WiFi.localIP());
+
+    // Initialize WebSocket connection with domain
+    USE_SERIAL.printf("Setting up WebSocket connection to %s%s\n", 
+                     ws_server_url, ws_path);
+    webSocket.begin(ws_server_url, 80, ws_path);
+    webSocket.onEvent(webSocketEvent);
+    webSocket.setReconnectInterval(5000);
+    webSocket.enableHeartbeat(15000, 3000, 2);
+
+    // Initialize BLE
+    initializeBLE();
+
+    // Initialize AFE and I2S
+    initializeAFE();
+    initializeI2S();
 }
 
 void loop() {
-    // Only run WebSocket operations if HTTP test passed
-    if (http_test_passed) {
-        webSocket.loop();
+    webSocket.loop();
 
-        // Monitor WebSocket connection
-        if (!wsConnected && (millis() - lastConnectionAttempt > connectionTimeout)) {
-            // Try HTTP test again before attempting WebSocket reconnection
-            if (testHTTPConnection()) {
-                Serial.println("HTTP still accessible, attempting WebSocket reconnect...");
-                Serial.printf("Connecting to: %s:%d%s\n", ws_server_url, ws_server_port, ws_path);
-                webSocket.disconnect();
-                webSocket.begin(ws_server_url, ws_server_port, ws_path);
-                lastConnectionAttempt = millis();
-            } else {
-                Serial.println("HTTP test failed, server might be down");
-                delay(5000);  // Wait longer before retry
+    // Handle audio processing
+    if (is_recording) {
+        int sample = I2S.read();
+        
+        if (sample && sample != -1 && sample != 1) {
+            // Feed audio data to AFE
+            if (audio_buffer != nullptr) {
+                audio_buffer[0] = sample;
+                afe_handle->feed(afe_data, audio_buffer);
+                
+                // Fetch processed audio
+                afe_fetch_result_t *fetch_result = afe_handle->fetch(afe_data);
+                
+                if (fetch_result) {
+                    // Check for wake word
+                    if (fetch_result->wakeup_state == WAKENET_DETECTED) {
+                        USE_SERIAL.println("Wake word detected!");
+                        // Send wake word detection event to server
+                        webSocket.sendTXT("{\"type\":\"wake_word_detected\"}");
+                    }
+                    
+                    // Check for voice commands
+                    if (fetch_result->vad_state == VAD_SPEECH) {
+                        // Send audio data to server
+                        webSocket.sendBIN((uint8_t*)fetch_result->data, fetch_result->data_size);
+                    }
+                }
             }
-        }
-    } else {
-        // Periodically retry HTTP test if it failed
-        static unsigned long lastHTTPTest = 0;
-        if (millis() - lastHTTPTest > 10000) {  // Try every 10 seconds
-            http_test_passed = testHTTPConnection();
-            lastHTTPTest = millis();
         }
     }
 
-    // Rest of your loop code...
-    if (deviceConnected) {
+    // Handle BLE data if connected
+    if (deviceConnected && pCharacteristic) {
         String value = pCharacteristic->getValue();
         if (value.length() > 0) {
-            Serial.printf("Received from BLE client: %s\n", value.c_str());
-            if (wsConnected) {
-                webSocket.sendTXT(value.c_str());
+            USE_SERIAL.printf("Received from BLE client: %s\n", value.c_str());
+            
+            // Handle voice commands
+            if (value == "start_recording") {
+                is_recording = true;
+                USE_SERIAL.println("Started recording");
+            } else if (value == "stop_recording") {
+                is_recording = false;
+                USE_SERIAL.println("Stopped recording");
             }
+            
+            webSocket.sendTXT(value.c_str());
         }
     }
 
-    delay(100);
+    delay(10);  // Small delay to prevent watchdog issues
 }

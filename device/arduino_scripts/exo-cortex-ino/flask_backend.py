@@ -6,7 +6,11 @@ import logging
 import os
 import sys
 from typing import List
-
+import numpy as np
+import whisper
+import io
+import wave
+import soundfile as sf
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -77,6 +81,34 @@ def esp32_test():
 # List to keep track of connected clients
 clients: List[WebSocket] = []
 
+# Add these constants after the existing constants
+WHISPER_MODEL = "base"  # Can be "tiny", "base", "small", "medium", "large"
+model = whisper.load_model(WHISPER_MODEL)
+
+# Add this function before the websocket_endpoint
+def transcribe_audio(audio_data):
+    """
+    Transcribe audio data using Whisper
+    """
+    try:
+        # Convert audio data to numpy array
+        audio_np = np.frombuffer(audio_data, dtype=np.float32)
+        
+        # Transcribe using Whisper
+        result = model.transcribe(audio_np)
+        
+        return {
+            "status": "success",
+            "text": result["text"],
+            "language": result.get("language", "unknown")
+        }
+    except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -108,9 +140,18 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_json({'event': 'error', 'message': 'Invalid JSON'})
             elif 'bytes' in data:
                 binary_data = data['bytes']
-                # Process binary data
                 logger.info(f"Received binary data of length: {len(binary_data)}")
-                # Store the binary data
+                
+                # Process and transcribe the audio data
+                transcription_result = transcribe_audio(binary_data)
+                
+                # Send transcription result back to client
+                await websocket.send_json({
+                    'event': 'transcription',
+                    'result': transcription_result
+                })
+                
+                # Store the binary data as before
                 with buffer_lock:
                     if len(audio_data_buffer) >= MAX_BUFFER_SIZE:
                         audio_data_buffer.pop(0)
@@ -166,7 +207,7 @@ if __name__ == '__main__':
     # Check if SSL certificates exist
     if os.path.exists(cert_path) and os.path.exists(key_path):
         uvicorn.run(
-            app,
+            "flask_backend:app",  # Use import string instead of app object
             host='0.0.0.0',
             port=5005,
             ssl_keyfile=key_path,
@@ -177,7 +218,7 @@ if __name__ == '__main__':
     else:
         # Run without SSL if certificates don't exist
         uvicorn.run(
-            app,
+            "flask_backend:app",  # Use import string instead of app object
             host='0.0.0.0',
             port=5005,
             log_level="debug",
