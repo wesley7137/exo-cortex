@@ -1,0 +1,23 @@
+{
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+  "pymakr.address": "COM5", // Change this to your COM port
+  "pymakr.sync_folder": "",
+  "pymakr.sync_file_types": "py,json,txt,jpg",
+  "pymakr.auto_connect": true,
+  "pymakr.auto_connect_device_ip": "",
+  "pymakr.connection_type": "serial",
+  "pymakr.ctrl_c_on_connect": true,
+  "pymakr.fast_upload": false,
+  "pymakr.py_ignore": [
+    "pymakr.conf",
+    ".vscode",
+    ".gitignore",
+    ".git",
+    "project.pymakr",
+    "env",
+    "venv",
+    ".python-version",
+    ".micropy/"
+  ]
+}

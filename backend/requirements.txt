@@ -268,3 +268,6 @@ langchain_openai
 langchain_huggingface
 langchain_ollama
 langchain_anthropic
+uvicorn
+fastapi
+python-multipart

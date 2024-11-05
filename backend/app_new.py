@@ -1,3 +1,8 @@
+from gevent import monkey
+monkey.patch_all()
+
+
+
 import secrets
 from bson.objectid import ObjectId
 import sys
@@ -15,7 +20,6 @@ from interfaces.cli import ExoCortexCLI
 from interfaces.voice_interface import VoiceInterface
 from ai_model.integrations_manager import AIAssistant
 from ai_model.fine_tune import FineTuner
-from ai_model.context_manager import ContextManager
 from cortex.cortex import Cortex, KnowledgeIngestion
 from utils.database import db
 from models import (
@@ -26,12 +30,8 @@ import joblib
 from stable_baselines3 import PPO
 from ai_model.agent_manager import get_agent_manager
 from flask_socketio import SocketIO, emit
-import numpy as np
-from datetime import datetime
 
 
-import eventlet
-eventlet.monkey_patch()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,6 +40,11 @@ logger = logging.getLogger(__name__)
 # Initialize Flask and SocketIO
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'admin'
+
+# Create application context
+app_context = app.app_context()
+app_context.push()
+
 socketio = SocketIO(app, 
                    cors_allowed_origins="*",
                    async_mode='eventlet',
@@ -47,7 +52,7 @@ socketio = SocketIO(app,
                    ping_interval=5)
 
 # Configure CORS
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=False)
 
 # WebSocket routes
 @socketio.on('connect', namespace='/ws/audio')
@@ -728,39 +733,6 @@ def run_cli():
     cli.run()
 
 
-def initialize_models():
-    global rl_agent, gnn_model
-    
-    try:
-        # Initialize RL agent with custom objects
-        custom_objects = {
-            'learning_rate': 0.0003,
-            'lr_schedule': lambda _: 0.0003
-        }
-        rl_agent = load_model(RL_AGENT_FILE, 'rl_agent')
-        if rl_agent is None:
-            logger.info("Training new RL agent...")
-            rl_agent = PPOAgent(total_timesteps=10000)
-            rl_agent.train()
-            save_model(rl_agent, RL_AGENT_FILE)
-            logger.info("RL agent training completed and saved.")
-        else:
-            logger.info("Loaded pre-trained RL agent.")
-        
-        # Initialize GNN model
-        gnn_model = load_model(GNN_MODEL_FILE, 'gnn_model')
-        if gnn_model is None:
-            logger.info("Initializing new GNN model...")
-            gnn_model = GNNModelWrapper(input_dim=10, hidden_dim=16, output_dim=4)
-            gnn_model.initialize_model()
-            save_model(gnn_model, GNN_MODEL_FILE)
-            logger.info("GNN model initialized and saved.")
-        else:
-            logger.info("Loaded pre-trained GNN model.")
-            
-    except Exception as e:
-        logger.error(f"Error initializing models: {e}")
-        raise
 
 
 if __name__ == '__main__':
@@ -771,6 +743,7 @@ if __name__ == '__main__':
                     host='0.0.0.0', 
                     port=5000, 
                     debug=True,
-                    use_reloader=False)
+                    use_reloader=True,
+                    allow_unsafe_werkzeug=True)
     except Exception as e:
         logger.error(f"Server startup error: {e}")

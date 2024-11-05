@@ -16,3 +16,21 @@
 2024-10-10 17:21:33,961 INFO PPOAgent trained for 10000 timesteps.
 2024-10-10 17:33:03,711 INFO PPOAgent trained for 10000 timesteps.
 2024-10-10 17:33:03,819 INFO GNNModelWrapper initialized successfully.
+2024-10-28 17:38:30,447 INFO PPOAgent trained for 10000 timesteps.
+2024-10-28 17:38:30,571 INFO GNNModelWrapper initialized successfully.
+2024-10-28 20:17:38,682 INFO PPOAgent trained for 10000 timesteps.
+2024-10-28 20:17:38,797 INFO GNNModelWrapper initialized successfully.
+2024-10-28 21:53:04,221 INFO PPOAgent trained for 10000 timesteps.
+2024-10-28 21:53:04,339 INFO GNNModelWrapper initialized successfully.
+2024-10-29 00:22:24,327 INFO PPOAgent trained for 10000 timesteps.
+2024-10-29 00:22:24,442 INFO GNNModelWrapper initialized successfully.
+2024-10-29 00:26:11,781 INFO PPOAgent trained for 10000 timesteps.
+2024-10-29 00:26:11,893 INFO GNNModelWrapper initialized successfully.
+2024-10-29 00:26:32,488 INFO PPOAgent trained for 10000 timesteps.
+2024-10-29 00:26:32,599 INFO GNNModelWrapper initialized successfully.
+2024-10-29 03:05:31,885 INFO PPOAgent trained for 10000 timesteps.
+2024-10-29 03:05:32,055 INFO GNNModelWrapper initialized successfully.
+2024-10-29 03:05:48,774 INFO PPOAgent trained for 10000 timesteps.
+2024-10-29 03:05:48,907 INFO GNNModelWrapper initialized successfully.
+2024-10-29 21:00:11,937 INFO PPOAgent trained for 10000 timesteps.
+2024-10-29 21:00:12,073 INFO GNNModelWrapper initialized successfully.
